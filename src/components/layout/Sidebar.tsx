@@ -1,96 +1,98 @@
+import {
+  BarChart3,
+  Calendar,
+  LayoutDashboard,
+  ListChecks,
+  Settings,
+  User,
+} from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Calendar, ListTodo, Home, Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { useMobile } from "@/hooks/use-mobile";
+import { useSidebarContext } from "@/providers/sidebar-provider";
 
-interface SidebarProps {
-  className?: string;
-}
-
-export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  const [collapsed, setCollapsed] = useState(false);
+export function Sidebar() {
   const location = useLocation();
-  
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-  
-  const navigationItems = [
+  const navigate = useNavigate();
+  const isMobile = useMobile();
+  const { setOpen } = useSidebarContext();
+
+  // Navigation links
+  const navLinks = [
     {
-      name: "Dashboard",
-      path: "/dashboard",
-      icon: <Home className="w-5 h-5" />,
+      title: "Dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
     },
     {
-      name: "Calendar",
-      path: "/calendar",
-      icon: <Calendar className="w-5 h-5" />,
+      title: "Calendar",
+      href: "/calendar",
+      icon: Calendar,
     },
     {
-      name: "Event List",
-      path: "/events",
-      icon: <ListTodo className="w-5 h-5" />,
+      title: "Events",
+      href: "/events",
+      icon: ListChecks,
+    },
+    {
+      title: "Event Stats",
+      href: "/event-stats",
+      icon: BarChart3,
     },
   ];
-  
+
+  const isActive = (href: string) => {
+    return location.pathname === href;
+  };
+
   return (
-    <div className={cn(
-      "flex flex-col h-screen bg-sidebar border-r border-border transition-all",
-      collapsed ? "w-16" : "w-64",
-      className
-    )}>
-      <div className="p-4 flex justify-between items-center border-b border-border">
-        <div className={cn("flex items-center", collapsed && "justify-center w-full")}>
-          {!collapsed && <span className="font-bold text-xl">Real Estate CRM</span>}
-          {collapsed && <span className="font-bold text-xl">RE</span>}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto"
-        >
-          {collapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
-        </Button>
-      </div>
-      
-      <div className="flex-1 py-4 overflow-y-auto">
-        <nav className="px-2 space-y-1">
-          {navigationItems.map((item) => (
-            <Link to={item.path} key={item.path}>
-              <Button
-                variant={isActive(item.path) ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start mb-1",
-                  collapsed ? "justify-center px-2" : "px-3"
-                )}
-              >
-                {item.icon}
-                {!collapsed && <span className="ml-2">{item.name}</span>}
-              </Button>
-            </Link>
-          ))}
-        </nav>
-      </div>
-      
-      <div className="p-4 border-t border-border">
-        <div className={cn(
-          "flex items-center",
-          collapsed && "justify-center"
-        )}>
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-            U
+    <div className="flex h-full max-w-xs flex-col border-r bg-background/50 backdrop-blur-sm">
+      <ScrollArea className="flex-1 space-y-4 p-4">
+        <div className="flex flex-col items-center space-y-2">
+          <Avatar className="h-20 w-20">
+            <AvatarImage src="https://github.com/shadcn.png" alt="Avatar" />
+            <AvatarFallback>SC</AvatarFallback>
+          </Avatar>
+          <div className="space-y-0.5 text-center">
+            <h4 className="text-sm font-medium leading-none">shadcn</h4>
+            <p className="text-xs text-muted-foreground">UI Engineer</p>
           </div>
-          {!collapsed && (
-            <div className="ml-3">
-              <div className="text-sm font-medium">User Name</div>
-              <div className="text-xs text-muted-foreground">Admin</div>
-            </div>
-          )}
         </div>
-      </div>
+        <Separator />
+        <div className="flex flex-col space-y-1">
+          {navLinks.map((link) => (
+            <Button
+              key={link.href}
+              variant="ghost"
+              className="justify-start px-4"
+              onClick={() => {
+                navigate(link.href);
+                if (isMobile) {
+                  setOpen(false);
+                }
+              }}
+            >
+              <link.icon className="mr-2 h-4 w-4" />
+              <span>{link.title}</span>
+            </Button>
+          ))}
+        </div>
+        <Separator />
+        <div className="flex flex-col space-y-1">
+          <Button variant="ghost" className="justify-start px-4">
+            <User className="mr-2 h-4 w-4" />
+            <span>Profile</span>
+          </Button>
+          <Button variant="ghost" className="justify-start px-4">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </Button>
+        </div>
+      </ScrollArea>
     </div>
   );
-};
+}
