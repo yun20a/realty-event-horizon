@@ -1,0 +1,164 @@
+
+import React from "react";
+import { format } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { CalendarEvent } from "@/types/events";
+import { EventBadge, EventStatusBadge } from "./EventBadge";
+import { Edit, MapPin, Trash2, Calendar, Users, QrCode } from "lucide-react";
+
+interface EventDetailsProps {
+  event: CalendarEvent;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onViewQrCode: () => void;
+}
+
+export const EventDetails: React.FC<EventDetailsProps> = ({
+  event,
+  open,
+  onOpenChange,
+  onEdit,
+  onDelete,
+  onViewQrCode,
+}) => {
+  const formatDate = (date: Date) => {
+    return format(date, "EEEE, MMMM d, yyyy");
+  };
+
+  const formatTime = (date: Date) => {
+    return format(date, "h:mm a");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] p-0">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-2xl font-bold">{event.title}</DialogTitle>
+          <DialogDescription className="flex flex-wrap gap-2 mt-2">
+            <EventBadge type={event.type} />
+            <EventStatusBadge status={event.status} />
+          </DialogDescription>
+        </DialogHeader>
+        
+        <ScrollArea className="max-h-[60vh] px-6">
+          <div className="py-4 space-y-4">
+            <div className="flex items-start gap-3">
+              <Calendar className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">{formatDate(event.start)}</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatTime(event.start)} - {formatTime(event.end)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Location</p>
+                <p className="text-sm text-muted-foreground">{event.location}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Users className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Participants</p>
+                <ul className="text-sm text-muted-foreground space-y-1 mt-1">
+                  {event.participants.map((participant) => (
+                    <li key={participant.id} className="flex items-center justify-between">
+                      <span>{participant.name}</span>
+                      {participant.checkInStatus !== undefined && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          participant.checkInStatus
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}>
+                          {participant.checkInStatus ? "Checked In" : "Not Checked In"}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {event.description && (
+              <div className="mt-4">
+                <p className="font-medium mb-1">Description</p>
+                <p className="text-sm text-muted-foreground">{event.description}</p>
+              </div>
+            )}
+            
+            <div>
+              <p className="font-medium mb-1">Reminders</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className={`text-xs px-2 py-1 rounded-full text-center ${
+                  event.reminders.email
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}>
+                  Email {event.reminders.email ? "On" : "Off"}
+                </div>
+                <div className={`text-xs px-2 py-1 rounded-full text-center ${
+                  event.reminders.sms
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}>
+                  SMS {event.reminders.sms ? "On" : "Off"}
+                </div>
+                <div className={`text-xs px-2 py-1 rounded-full text-center ${
+                  event.reminders.push
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}>
+                  Push {event.reminders.push ? "On" : "Off"}
+                </div>
+              </div>
+            </div>
+            
+            {event.property && (
+              <div className="mt-4">
+                <p className="font-medium mb-1">Property Details</p>
+                <div className="text-sm text-muted-foreground">
+                  <p>{event.property.address}</p>
+                  <p>{event.property.city}, {event.property.state} {event.property.zipCode}</p>
+                  {event.property.price && (
+                    <p className="font-medium mt-1">
+                      ${event.property.price.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        <div className="px-6 py-4 flex flex-wrap justify-between gap-2 bg-muted/20">
+          <Button variant="outline" size="sm" onClick={onDelete} className="gap-2">
+            <Trash2 className="h-4 w-4" /> Delete
+          </Button>
+          <div className="flex space-x-2">
+            <Button variant="outline" size="sm" onClick={onViewQrCode} className="gap-2">
+              <QrCode className="h-4 w-4" /> QR Code
+            </Button>
+            <Button size="sm" onClick={onEdit} className="gap-2">
+              <Edit className="h-4 w-4" /> Edit
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
