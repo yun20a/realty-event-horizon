@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarEvent } from "@/types/events";
 import { EventBadge } from "@/components/events/EventBadge";
-import { Share, MapPin, Calendar, Clock, ArrowRight } from "lucide-react";
+import { Share, MapPin, Calendar, Clock, ArrowRight, Users } from "lucide-react";
 import { EventAttendanceForm } from "@/components/events/EventAttendanceForm";
+import { QRCodeWithTimer } from "@/components/events/QRCodeWithTimer";
+import { AttendanceLogView } from "@/components/events/AttendanceLogView";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as mockEventService from "@/services/mockEventService";
 import { toast } from "sonner";
 
@@ -17,6 +20,8 @@ const EventLanding = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAttendanceForm, setShowAttendanceForm] = useState(false);
+  const [checkInUrl, setCheckInUrl] = useState("");
+  const [activeTab, setActiveTab] = useState("details");
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -25,6 +30,10 @@ const EventLanding = () => {
           const eventData = await mockEventService.getEventById(id);
           if (eventData) {
             setEvent(eventData);
+            
+            // Get the check-in URL for the QR code
+            const url = mockEventService.getCheckInUrl(id);
+            setCheckInUrl(url);
           } else {
             setError("Event not found");
           }
@@ -140,113 +149,119 @@ const EventLanding = () => {
               </div>
             </CardHeader>
             <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                      <Calendar className="w-5 h-5" />
-                    </div>
-                    <div className="text-gray-600 dark:text-gray-300">
-                      <div className="font-medium">Date & Time</div>
-                      <div>{format(event.start, "EEEE, MMMM d, yyyy")}</div>
-                      <div>{format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
-                      <MapPin className="w-5 h-5" />
-                    </div>
-                    <div className="text-gray-600 dark:text-gray-300">
-                      <div className="font-medium">Location</div>
-                      <div>
-                        {event.location}
-                      </div>
-                    </div>
-                  </div>
-
-                  {event.description && (
-                    <div>
-                      <h3 className="font-medium text-lg mb-2">About</h3>
-                      <div className="text-gray-600 dark:text-gray-300">
-                        {event.description}
-                      </div>
-                    </div>
-                  )}
-
-                  {agent && (
-                    <div>
-                      <h3 className="font-medium text-lg mb-2">Contact</h3>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-medium">
-                          {agent.name.charAt(0)}
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-3 mb-6">
+                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="qr-code">QR Check-in</TabsTrigger>
+                  <TabsTrigger value="attendance">
+                    <Users className="mr-2 h-4 w-4" />
+                    Attendance
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="details">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-6">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                          <Calendar className="w-5 h-5" />
                         </div>
+                        <div className="text-gray-600 dark:text-gray-300">
+                          <div className="font-medium">Date & Time</div>
+                          <div>{format(event.start, "EEEE, MMMM d, yyyy")}</div>
+                          <div>{format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
+                          <MapPin className="w-5 h-5" />
+                        </div>
+                        <div className="text-gray-600 dark:text-gray-300">
+                          <div className="font-medium">Location</div>
+                          <div>
+                            {event.location}
+                          </div>
+                        </div>
+                      </div>
+
+                      {event.description && (
                         <div>
-                          <div className="font-medium">{agent.name}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-300">{agent.email}</div>
+                          <h3 className="font-medium text-lg mb-2">About</h3>
+                          <div className="text-gray-600 dark:text-gray-300">
+                            {event.description}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                      )}
 
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-medium text-lg mb-2">Check In</h3>
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 flex flex-col items-center justify-center">
-                      <div className="w-48 h-48 bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
-                        QR Code
-                      </div>
-                      <p className="text-sm text-center text-gray-600 dark:text-gray-400 mb-4">
-                        Scan this code upon arrival to check in
-                      </p>
-                      {!showAttendanceForm ? (
-                        <Button 
-                          size="sm" 
-                          className="w-full"
-                          onClick={() => setShowAttendanceForm(true)}
-                        >
-                          Confirm Attendance
-                        </Button>
-                      ) : (
-                        <Button 
-                          size="sm"
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => setShowAttendanceForm(false)}
-                        >
-                          Cancel
-                        </Button>
+                      {agent && (
+                        <div>
+                          <h3 className="font-medium text-lg mb-2">Contact</h3>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-medium">
+                              {agent.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="font-medium">{agent.name}</div>
+                              <div className="text-sm text-gray-600 dark:text-gray-300">{agent.email}</div>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
 
-                  <div>
-                    <h3 className="font-medium text-lg mb-2">Map</h3>
-                    <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                      Map Preview
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="font-medium text-lg mb-2">Map</h3>
+                        <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                          Map Preview
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {showAttendanceForm && (
-                <div className="mt-6">
-                  <h3 className="font-medium text-lg mb-4">Confirm Your Attendance</h3>
-                  <EventAttendanceForm 
-                    eventId={event.id} 
-                    onSuccess={() => setShowAttendanceForm(false)} 
-                  />
-                </div>
-              )}
-
-              {!showAttendanceForm && (
-                <div className="flex justify-center mt-10">
-                  <Button onClick={() => setShowAttendanceForm(true)}>
-                    RSVP to this event <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+                  
+                  {!showAttendanceForm ? (
+                    <div className="flex justify-center mt-10">
+                      <Button onClick={() => setShowAttendanceForm(true)}>
+                        RSVP to this event <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="mt-6">
+                      <h3 className="font-medium text-lg mb-4">Confirm Your Attendance</h3>
+                      <EventAttendanceForm 
+                        eventId={event.id} 
+                        onSuccess={() => setShowAttendanceForm(false)} 
+                      />
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="qr-code">
+                  <div className="flex flex-col items-center">
+                    <QRCodeWithTimer
+                      event={event}
+                      checkInUrl={checkInUrl}
+                    />
+                    
+                    <div className="mt-8 text-center max-w-md mx-auto">
+                      <h3 className="font-medium text-lg mb-2">How to check in</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                        Scan this QR code using your mobile device camera or share the code with attendees.
+                        Attendees will need to verify their location to complete check-in.
+                      </p>
+                      
+                      <Button onClick={() => window.open(checkInUrl, '_blank')} variant="outline" className="mt-2">
+                        Open Check-in Page
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="attendance">
+                  <AttendanceLogView event={event} />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 

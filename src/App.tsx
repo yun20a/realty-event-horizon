@@ -1,7 +1,7 @@
 
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "./components/theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 
@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Calendar from "@/pages/Calendar";
 import EventList from "@/pages/EventList";
 import EventLanding from "@/pages/EventLanding";
+import EventCheckIn from "@/pages/EventCheckIn";
 import NotFound from "@/pages/NotFound";
 import EventStats from "./pages/EventStats";
 import Profile from "./pages/Profile";
@@ -35,6 +36,7 @@ const App = () => {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
             <Route path="/event/:id" element={<EventLanding />} />
+            <Route path="/event/:id/check-in" element={<EventCheckIn />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
