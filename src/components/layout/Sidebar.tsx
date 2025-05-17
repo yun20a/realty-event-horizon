@@ -1,3 +1,4 @@
+
 import {
   BarChart3,
   Calendar,
@@ -12,13 +13,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebarContext } from "@/providers/sidebar-provider";
 
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const { setOpen } = useSidebarContext();
 
   // Navigation links
@@ -67,7 +68,7 @@ export function Sidebar() {
           {navLinks.map((link) => (
             <Button
               key={link.href}
-              variant="ghost"
+              variant={isActive(link.href) ? "default" : "ghost"}
               className="justify-start px-4"
               onClick={() => {
                 navigate(link.href);
