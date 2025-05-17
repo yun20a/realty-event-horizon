@@ -90,6 +90,17 @@ export const EventForm: React.FC<EventFormProps> = ({
   };
 
   const handlePropertyChange = (propertyId: string) => {
+    // If "none" is selected, clear the property
+    if (propertyId === "none") {
+      setFormData({
+        ...formData,
+        propertyId: undefined,
+        property: undefined,
+        location: formData.location || "", // Keep existing location if any
+      });
+      return;
+    }
+    
     const property = properties.find((p) => p.id === propertyId);
     setFormData({
       ...formData,
@@ -237,14 +248,14 @@ export const EventForm: React.FC<EventFormProps> = ({
               <div>
                 <Label htmlFor="property">Property</Label>
                 <Select
-                  value={formData.propertyId}
+                  value={formData.propertyId || "none"}
                   onValueChange={handlePropertyChange}
                 >
                   <SelectTrigger id="property" className="mt-1">
                     <SelectValue placeholder="Select property (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No property</SelectItem>
+                    <SelectItem value="none">No property</SelectItem>
                     {properties.map((property) => (
                       <SelectItem key={property.id} value={property.id}>
                         {property.address}, {property.city}

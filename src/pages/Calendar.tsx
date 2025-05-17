@@ -221,7 +221,7 @@ const Calendar = () => {
           onOpenChange={setShowEventDetails}
           onEdit={handleEditEvent}
           onDelete={handleDeleteEvent}
-          onViewQrCode={handleViewQrCode}
+          onViewQrCode={handleViewQRCode}
         />
       )}
       
