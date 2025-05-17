@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -44,6 +43,16 @@ export function Sidebar() {
       href: "/event-stats",
       icon: BarChart3,
     },
+    {
+      title: "Profile",
+      href: "/profile",
+      icon: User,
+    },
+    {
+      title: "Settings",
+      href: "/settings",
+      icon: Settings,
+    },
   ];
 
   const isActive = (href: string) => {
@@ -53,15 +62,8 @@ export function Sidebar() {
   return (
     <div className="flex h-full max-w-xs flex-col border-r bg-background/50 backdrop-blur-sm">
       <ScrollArea className="flex-1 space-y-4 p-4">
-        <div className="flex flex-col items-center space-y-2">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src="https://github.com/shadcn.png" alt="Avatar" />
-            <AvatarFallback>SC</AvatarFallback>
-          </Avatar>
-          <div className="space-y-0.5 text-center">
-            <h4 className="text-sm font-medium leading-none">shadcn</h4>
-            <p className="text-xs text-muted-foreground">UI Engineer</p>
-          </div>
+        <div className="pt-4">
+          <h3 className="px-4 text-lg font-semibold">Event Manager</h3>
         </div>
         <Separator />
         <div className="flex flex-col space-y-1">
@@ -81,17 +83,6 @@ export function Sidebar() {
               <span>{link.title}</span>
             </Button>
           ))}
-        </div>
-        <Separator />
-        <div className="flex flex-col space-y-1">
-          <Button variant="ghost" className="justify-start px-4">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </Button>
-          <Button variant="ghost" className="justify-start px-4">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </Button>
         </div>
       </ScrollArea>
     </div>

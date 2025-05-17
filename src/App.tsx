@@ -12,13 +12,12 @@ import Calendar from "@/pages/Calendar";
 import EventList from "@/pages/EventList";
 import EventLanding from "@/pages/EventLanding";
 import NotFound from "@/pages/NotFound";
-
-// Import the EventStats component
 import EventStats from "./pages/EventStats";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
-// Update the Routes to include EventStats
 const App = () => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
@@ -31,6 +30,8 @@ const App = () => {
               <Route path="calendar" element={<Calendar />} />
               <Route path="events" element={<EventList />} />
               <Route path="event-stats" element={<EventStats />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
             <Route path="/event/:id" element={<EventLanding />} />
