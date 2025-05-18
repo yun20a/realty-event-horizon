@@ -6,11 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowLeft, ScanLine } from "lucide-react";
 
-// Adding the interface for IDetectedBarcode based on the error message
-interface IDetectedBarcode {
-  value: string;
-  format?: string;
-}
+// Import the interface from the library instead of defining our own
+import type { IDetectedBarcode } from "@yudiel/react-qr-scanner";
 
 interface QRScannerModalProps {
   open: boolean;
@@ -41,7 +38,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
     }
     
     // Get the value from the first detected code
-    const result = detectedCodes[0].value;
+    const result = detectedCodes[0].text; // Using 'text' property instead of 'value'
     console.log("QR Code scanned:", result);
     
     // Check if URL is an event check-in URL
