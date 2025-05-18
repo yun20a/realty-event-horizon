@@ -1,4 +1,3 @@
-
 export type EventType = 'property' | 'client' | 'contract' | 'internal' | 'followup';
 
 export type EventStatus = 'scheduled' | 'completed' | 'cancelled' | 'pending';
@@ -34,6 +33,19 @@ export interface Property {
   };
 }
 
+export interface AttendanceRecord {
+  id: string;
+  participantId: string;
+  timestamp: Date;
+  status: CheckInStatus;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
+  errorMessage?: string;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -43,6 +55,7 @@ export interface CalendarEvent {
   allDay?: boolean;
   propertyId?: string;
   property?: Property;
+  coordinates?: { lat: number; lng: number } | null;
   participants: Participant[];
   status: EventStatus;
   location: string;
@@ -52,24 +65,13 @@ export interface CalendarEvent {
     sms: boolean;
     push: boolean;
   };
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt?: Date;
   qrCode?: string;
   checkInTimeWindow?: {
     start: Date;
     end: Date;
   };
-  createdBy: string;
-  createdAt: Date;
-  updatedAt?: Date;
-  attendanceLog?: {
-    id: string;
-    participantId: string;
-    timestamp: Date;
-    status: CheckInStatus;
-    location?: {
-      latitude: number;
-      longitude: number;
-      accuracy?: number;
-    };
-    errorMessage?: string;
-  }[];
+  attendanceLog?: AttendanceRecord[];
 }

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,9 +21,17 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarEvent, EventType, Property, Participant } from "@/types/events";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EventQRCode } from "./EventQRCode";
+import { MapPicker } from "../map/MapPicker";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface EventFormProps {
   event?: CalendarEvent;
@@ -41,6 +49,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   onCancel,
 }) => {
   const isNewEvent = !event;
+  const isMobile = useIsMobile();
   
   const [formData, setFormData] = useState<Partial<CalendarEvent>>(
     event || {
@@ -56,6 +65,7 @@ export const EventForm: React.FC<EventFormProps> = ({
         sms: false,
         push: true,
       },
+      coordinates: event?.coordinates || null,
     }
   );
   
@@ -97,6 +107,7 @@ export const EventForm: React.FC<EventFormProps> = ({
         propertyId: undefined,
         property: undefined,
         location: formData.location || "", // Keep existing location if any
+        coordinates: null,
       });
       return;
     }
@@ -107,6 +118,14 @@ export const EventForm: React.FC<EventFormProps> = ({
       propertyId,
       property,
       location: property ? `${property.address}, ${property.city}, ${property.state} ${property.zipCode}` : formData.location,
+      coordinates: property?.coordinates || null,
+    });
+  };
+
+  const handleLocationSelect = (coordinates: { lat: number; lng: number }) => {
+    setFormData({
+      ...formData,
+      coordinates,
     });
   };
 
@@ -333,17 +352,67 @@ export const EventForm: React.FC<EventFormProps> = ({
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="Enter location"
-                  className="mt-1"
-                />
-              </div>
+              {/* Mobile accordion for location section */}
+              {isMobile ? (
+                <Accordion type="single" collapsible defaultValue="location">
+                  <AccordionItem value="location">
+                    <AccordionTrigger className="py-2">
+                      <div className="flex items-center">
+                        <MapPin className="mr-2 h-4 w-4" />
+                        Location
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-4 pt-2">
+                        <div>
+                          <Label htmlFor="location">Address</Label>
+                          <Input
+                            id="location"
+                            name="location"
+                            value={formData.location}
+                            onChange={handleInputChange}
+                            placeholder="Enter location"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Pin Location on Map</Label>
+                          <div className="mt-2 h-[250px] rounded-md overflow-hidden">
+                            <MapPicker
+                              initialLocation={formData.coordinates || undefined}
+                              onLocationSelect={handleLocationSelect}
+                              height="250px"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              ) : (
+                <>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="Enter location"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Pin Location on Map</Label>
+                    <div className="mt-2 h-[300px] rounded-md overflow-hidden">
+                      <MapPicker
+                        initialLocation={formData.coordinates || undefined}
+                        onLocationSelect={handleLocationSelect}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div>
                 <Label htmlFor="description">Description</Label>
@@ -399,12 +468,21 @@ export const EventForm: React.FC<EventFormProps> = ({
       </Card>
 
       <div className="space-y-6">
-        {/* Map preview would be here - using a placeholder */}
+        {/* Map preview */}
         <Card>
           <CardContent className="p-0 aspect-video overflow-hidden rounded-md">
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-              Map Preview
-            </div>
+            {formData.coordinates ? (
+              <MapPicker 
+                initialLocation={formData.coordinates}
+                readOnly={true}
+                height="100%"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                <MapPin className="h-8 w-8 mr-2" />
+                <span>Select a location on the map</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 

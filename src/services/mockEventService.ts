@@ -193,6 +193,7 @@ const generateMockEvents = (): CalendarEvent[] => {
         allDay: Math.random() > 0.9, // 10% all-day events
         propertyId: eventProperty?.id,
         property: eventProperty,
+        coordinates: eventProperty?.coordinates || null,
         participants: eventParticipants,
         status,
         location: eventProperty 

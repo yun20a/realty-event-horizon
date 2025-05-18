@@ -13,6 +13,8 @@ import { AttendanceLogView } from "@/components/events/AttendanceLogView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as mockEventService from "@/services/mockEventService";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { StaticMap } from "@/components/map/StaticMap";
 
 const EventLanding = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +24,7 @@ const EventLanding = () => {
   const [showAttendanceForm, setShowAttendanceForm] = useState(false);
   const [checkInUrl, setCheckInUrl] = useState("");
   const [activeTab, setActiveTab] = useState("details");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -81,6 +84,18 @@ const EventLanding = () => {
     window.open(whatsappUrl, "_blank");
   };
 
+  const handleGetDirections = () => {
+    if (!event) return;
+    
+    if (event.coordinates) {
+      const { lat, lng } = event.coordinates;
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, "_blank");
+    } else {
+      // Try to open map with the location text
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`, "_blank");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -107,7 +122,7 @@ const EventLanding = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto py-12 px-4">
+      <div className="container mx-auto py-6 md:py-12 px-4">
         <div className="max-w-3xl mx-auto">
           <Card className="shadow-lg">
             <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg">
@@ -150,12 +165,13 @@ const EventLanding = () => {
             </CardHeader>
             <CardContent className="pt-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsList className={`grid w-full ${isMobile ? 'grid-cols-4' : 'grid-cols-4'} mb-6`}>
                   <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="map">Map</TabsTrigger>
                   <TabsTrigger value="qr-code">QR Check-in</TabsTrigger>
                   <TabsTrigger value="attendance">
-                    <Users className="mr-2 h-4 w-4" />
-                    Attendance
+                    <Users className={`${isMobile ? '' : 'mr-2'} h-4 w-4`} />
+                    {!isMobile && "Attendance"}
                   </TabsTrigger>
                 </TabsList>
                 
@@ -182,6 +198,13 @@ const EventLanding = () => {
                           <div>
                             {event.location}
                           </div>
+                          <Button 
+                            variant="link" 
+                            className="px-0 h-6 text-green-600 dark:text-green-400" 
+                            onClick={handleGetDirections}
+                          >
+                            Get directions
+                          </Button>
                         </div>
                       </div>
 
@@ -210,14 +233,25 @@ const EventLanding = () => {
                       )}
                     </div>
 
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="font-medium text-lg mb-2">Map</h3>
-                        <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                          Map Preview
+                    {!isMobile && (
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="font-medium text-lg mb-2">Location</h3>
+                          {event.coordinates ? (
+                            <StaticMap 
+                              location={event.coordinates}
+                              address={event.location}
+                              height="200px"
+                            />
+                          ) : (
+                            <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                              <MapPin className="h-8 w-8 mr-2 text-gray-400" />
+                              <span className="text-gray-400">Location Map</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                   
                   {!showAttendanceForm ? (
@@ -235,6 +269,39 @@ const EventLanding = () => {
                       />
                     </div>
                   )}
+                </TabsContent>
+                
+                <TabsContent value="map">
+                  <div className="h-[400px] md:h-[500px]">
+                    {event.coordinates ? (
+                      <div className="h-full flex flex-col">
+                        <StaticMap 
+                          location={event.coordinates}
+                          address={event.location}
+                          height="85%"
+                        />
+                        <div className="mt-4 text-center">
+                          <p className="text-sm mb-2">{event.location}</p>
+                          <Button onClick={handleGetDirections}>
+                            Get Directions
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center">
+                        <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+                        <p className="text-lg font-medium mb-2">No exact location available</p>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          This event doesn't have exact coordinates set.
+                        </p>
+                        {event.location && (
+                          <Button onClick={handleGetDirections}>
+                            Look up "{event.location}"
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </TabsContent>
                 
                 <TabsContent value="qr-code">
@@ -268,6 +335,46 @@ const EventLanding = () => {
           <div className="text-center mt-6 text-sm text-gray-500">
             This event is managed by a real estate CRM system.
           </div>
+
+          {/* Mobile Bottom Navigation */}
+          {isMobile && (
+            <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 z-50">
+              <div className="flex justify-around">
+                <Button 
+                  variant="ghost" 
+                  className={`flex flex-col items-center px-4 py-2 ${activeTab === 'details' ? 'text-blue-600' : 'text-gray-500'}`} 
+                  onClick={() => setActiveTab('details')}
+                >
+                  <Calendar className="h-5 w-5 mb-1" />
+                  <span className="text-xs">Details</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className={`flex flex-col items-center px-4 py-2 ${activeTab === 'map' ? 'text-blue-600' : 'text-gray-500'}`} 
+                  onClick={() => setActiveTab('map')}
+                >
+                  <MapPin className="h-5 w-5 mb-1" />
+                  <span className="text-xs">Map</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className={`flex flex-col items-center px-4 py-2 ${activeTab === 'qr-code' ? 'text-blue-600' : 'text-gray-500'}`} 
+                  onClick={() => setActiveTab('qr-code')}
+                >
+                  <QrCode className="h-5 w-5 mb-1" />
+                  <span className="text-xs">QR Code</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className={`flex flex-col items-center px-4 py-2 ${activeTab === 'attendance' ? 'text-blue-600' : 'text-gray-500'}`} 
+                  onClick={() => setActiveTab('attendance')}
+                >
+                  <Users className="h-5 w-5 mb-1" />
+                  <span className="text-xs">Guests</span>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

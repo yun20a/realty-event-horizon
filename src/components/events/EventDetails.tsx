@@ -17,6 +17,8 @@ import { Edit, MapPin, Trash2, Calendar, Users, QrCode } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AttendanceLogView } from "./AttendanceLogView";
 import { QRCodeCanvas } from "qrcode.react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { StaticMap } from "../map/StaticMap";
 
 interface EventDetailsProps {
   event: CalendarEvent;
@@ -36,6 +38,7 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
   onViewQrCode,
 }) => {
   const [activeTab, setActiveTab] = useState<string>("details");
+  const isMobile = useIsMobile();
   
   const formatDate = (date: Date) => {
     return format(date, "EEEE, MMMM d, yyyy");
@@ -45,9 +48,19 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
     return format(date, "h:mm a");
   };
 
+  const viewDirections = () => {
+    if (event.coordinates) {
+      const { lat, lng } = event.coordinates;
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, "_blank");
+    } else {
+      // Try to open map with the location text
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`, "_blank");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0">
+      <DialogContent className={`sm:max-w-[600px] p-0 ${isMobile ? 'h-[90vh]' : ''} overflow-hidden`}>
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-2xl font-bold">{event.title}</DialogTitle>
           <DialogDescription className="flex flex-wrap gap-2 mt-2">
@@ -59,12 +72,13 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="px-6 pt-2">
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="location">Location</TabsTrigger>
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="qrcode">QR Code</TabsTrigger>
           </TabsList>
           
           <TabsContent value="details">
-            <ScrollArea className="max-h-[60vh] px-6">
+            <ScrollArea className={`${isMobile ? 'h-[calc(90vh-180px)]' : 'max-h-[60vh]'} px-6`}>
               <div className="py-4 space-y-4">
                 <div className="flex items-start gap-3">
                   <Calendar className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -81,6 +95,13 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
                   <div>
                     <p className="font-medium">Location</p>
                     <p className="text-sm text-muted-foreground">{event.location}</p>
+                    <Button 
+                      variant="link" 
+                      className="px-0 h-6 text-sm" 
+                      onClick={viewDirections}
+                    >
+                      Get directions
+                    </Button>
                   </div>
                 </div>
 
@@ -159,11 +180,44 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
             </ScrollArea>
           </TabsContent>
           
-          <TabsContent value="attendance" className="h-[60vh] overflow-auto px-6 py-4">
+          <TabsContent value="location">
+            <div className={`${isMobile ? 'h-[calc(90vh-180px)]' : 'h-[60vh]'} overflow-hidden p-4`}>
+              {event.coordinates ? (
+                <div className="h-full flex flex-col">
+                  <StaticMap 
+                    location={event.coordinates}
+                    address={event.location}
+                    height="80%"
+                  />
+                  <div className="mt-4 text-center">
+                    <p className="text-sm mb-2">{event.location}</p>
+                    <Button onClick={viewDirections}>
+                      Get Directions
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center">
+                  <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium mb-2">No exact location available</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    This event doesn't have exact coordinates set.
+                  </p>
+                  {event.location && (
+                    <Button onClick={viewDirections}>
+                      Look up "{event.location}"
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="attendance" className={`${isMobile ? 'h-[calc(90vh-180px)]' : 'h-[60vh]'} overflow-auto px-6 py-4`}>
             <AttendanceLogView event={event} />
           </TabsContent>
           
-          <TabsContent value="qrcode" className="h-[60vh] overflow-auto px-6 py-4">
+          <TabsContent value="qrcode" className={`${isMobile ? 'h-[calc(90vh-180px)]' : 'h-[60vh]'} overflow-auto px-6 py-4`}>
             <div className="flex flex-col items-center justify-center py-6">
               <div className="bg-white p-6 rounded-xl border shadow-sm mb-4">
                 {event.qrCode && (
