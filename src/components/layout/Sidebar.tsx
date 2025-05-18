@@ -6,6 +6,7 @@ import {
   ListChecks,
   Settings,
   User,
+  ScanLine,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -14,12 +15,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebarContext } from "@/providers/sidebar-provider";
+import { useQRScanner } from "@/providers/qr-scanner-provider";
 
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { setOpen } = useSidebarContext();
+  const { openScanner } = useQRScanner();
 
   // Navigation links
   const navLinks = [
@@ -59,6 +62,13 @@ export function Sidebar() {
     return location.pathname === href;
   };
 
+  const handleOpenScanner = () => {
+    openScanner();
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
+
   return (
     <div className="flex h-full max-w-xs flex-col border-r bg-background/50 backdrop-blur-sm">
       <ScrollArea className="flex-1 space-y-4 p-4">
@@ -83,6 +93,16 @@ export function Sidebar() {
               <span>{link.title}</span>
             </Button>
           ))}
+
+          {/* QR Scanner Button */}
+          <Button
+            variant="outline"
+            className="justify-start px-4 mt-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
+            onClick={handleOpenScanner}
+          >
+            <ScanLine className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span className="font-medium text-blue-700 dark:text-blue-300">Scan QR Code</span>
+          </Button>
         </div>
       </ScrollArea>
     </div>
