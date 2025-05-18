@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -81,10 +80,11 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
               <Scanner
                 onScan={handleScanSuccess}
                 onError={handleError}
-                // Using 'styles' instead of 'style' as suggested by the error
                 styles={{
-                  width: '100%',
-                  height: '100%'
+                  container: {
+                    width: '100%',
+                    height: '100%'
+                  }
                 }}
               />
             )}
@@ -96,15 +96,13 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
           </div>
           
           {/* Error message */}
-          {error && (
-            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-6">
-              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-              <p className="text-center mb-6">{error}</p>
-              <Button variant="outline" onClick={() => setError(null)} className="bg-white/10 text-white border-white/20">
-                Try Again
-              </Button>
-            </div>
-          )}
+          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-6" style={{ display: error ? 'flex' : 'none' }}>
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <p className="text-center mb-6">{error}</p>
+            <Button variant="outline" onClick={() => setError(null)} className="bg-white/10 text-white border-white/20">
+              Try Again
+            </Button>
+          </div>
         </div>
         
         <div className="p-4 flex justify-between">
