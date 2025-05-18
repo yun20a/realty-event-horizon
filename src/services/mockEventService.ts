@@ -5,6 +5,13 @@ import { LocationData } from "./locationService";
 // Helper to generate a random ID
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
+// Generate a QR code URL for an event - Move this function definition earlier in the file
+const generateEventQRCode = (eventId: string): string => {
+  // Generate a URL that points to the event check-in page
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/event/${eventId}/check-in`;
+};
+
 // Sample properties
 const sampleProperties: Property[] = [
   {
@@ -340,13 +347,6 @@ export const checkInParticipant = (
   mockEvents[eventIndex].participants[participantIndex] = updatedParticipant;
   
   return Promise.resolve(updatedParticipant);
-};
-
-// Generate a QR code URL for an event
-export const generateEventQRCode = (eventId: string): string => {
-  // Generate a URL that points to the event check-in page
-  const baseUrl = window.location.origin;
-  return `${baseUrl}/event/${eventId}/check-in`;
 };
 
 // Check-in via QR code with location tracking
