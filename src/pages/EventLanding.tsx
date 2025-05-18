@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { format } from "date-fns";
@@ -34,8 +33,8 @@ const EventLanding = () => {
           if (eventData) {
             setEvent(eventData);
             
-            // Get the check-in URL for the QR code
-            const url = mockEventService.getCheckInUrl(id);
+            // Get the check-in URL for the QR code - either use the one from the event or generate a new one
+            const url = eventData.qrCode || mockEventService.getCheckInUrl(id);
             setCheckInUrl(url);
           } else {
             setError("Event not found");

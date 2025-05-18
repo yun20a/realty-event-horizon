@@ -13,20 +13,23 @@ interface EventQRCodeProps {
 }
 
 export const EventQRCode: React.FC<EventQRCodeProps> = ({ event, qrCodeUrl }) => {
+  // Generate QR code URL from event data if not provided
+  const effectiveQrUrl = qrCodeUrl || `${window.location.origin}/event/${event.id}/check-in`;
+  
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: event.title,
           text: `Check in to this event: ${event.title}`,
-          url: qrCodeUrl,
+          url: effectiveQrUrl,
         });
       } catch (error) {
         console.error("Error sharing:", error);
       }
     } else {
       // Fallback for browsers that don't support the Web Share API
-      navigator.clipboard.writeText(qrCodeUrl);
+      navigator.clipboard.writeText(effectiveQrUrl);
       toast.success("QR code URL copied to clipboard!");
     }
   };
@@ -58,7 +61,7 @@ export const EventQRCode: React.FC<EventQRCodeProps> = ({ event, qrCodeUrl }) =>
           {/* Render actual QR code */}
           <QRCodeCanvas 
             id="event-qr-code"
-            value={qrCodeUrl}
+            value={effectiveQrUrl}
             size={200}
             includeMargin={true}
             level="H"

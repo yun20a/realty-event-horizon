@@ -1,3 +1,4 @@
+
 import { CalendarEvent, EventType, EventStatus, Participant, Property, CheckInStatus } from "@/types/events";
 import { addDays, addHours, subDays, startOfDay, endOfDay } from "date-fns";
 import { LocationData } from "./locationService";
@@ -5,7 +6,7 @@ import { LocationData } from "./locationService";
 // Helper to generate a random ID
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
-// Generate a QR code URL for an event - Move this function definition earlier in the file
+// Generate a QR code URL for an event
 const generateEventQRCode = (eventId: string): string => {
   // Generate a URL that points to the event check-in page
   const baseUrl = window.location.origin;
@@ -258,11 +259,12 @@ export const getEventById = (id: string): Promise<CalendarEvent | undefined> => 
 
 // Create a new event
 export const createEvent = (event: Omit<CalendarEvent, "id" | "createdAt">): Promise<CalendarEvent> => {
+  const newId = generateId();
   const newEvent: CalendarEvent = {
     ...event,
-    id: generateId(),
+    id: newId,
     createdAt: new Date(),
-    qrCode: generateEventQRCode(`${event.title}-${generateId()}`),
+    qrCode: generateEventQRCode(newId),
     checkInTimeWindow: {
       start: new Date(event.start.getTime() - 60 * 60 * 1000), // 1 hour before
       end: new Date(event.end.getTime() + 60 * 60 * 1000), // 1 hour after
@@ -413,5 +415,5 @@ export const checkInParticipantWithLocation = async (
 
 // Get the check-in URL for a specific event
 export const getCheckInUrl = (eventId: string): string => {
-  return `${window.location.origin}/event/${eventId}/check-in`;
+  return generateEventQRCode(eventId);
 };

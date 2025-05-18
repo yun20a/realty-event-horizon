@@ -10,16 +10,21 @@ import { QRCodeCanvas } from 'qrcode.react';
 
 interface QRCodeWithTimerProps {
   event: CalendarEvent;
-  checkInUrl: string;
+  checkInUrl?: string;
 }
 
 export const QRCodeWithTimer: React.FC<QRCodeWithTimerProps> = ({ event, checkInUrl }) => {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isQrActive, setIsQrActive] = useState<boolean>(false);
   
+  // Generate QR code URL from event data if not provided
+  const effectiveCheckInUrl = checkInUrl || `${window.location.origin}/event/${event.id}/check-in`;
+  
   // Determine the valid time window for check-in (default to 1 hour before and after event time)
-  const validStartTime = new Date(event.start.getTime() - 60 * 60 * 1000); // 1 hour before
-  const validEndTime = new Date(event.end.getTime() + 60 * 60 * 1000); // 1 hour after
+  const validStartTime = event.checkInTimeWindow?.start || 
+    new Date(event.start.getTime() - 60 * 60 * 1000); // 1 hour before
+  const validEndTime = event.checkInTimeWindow?.end || 
+    new Date(event.end.getTime() + 60 * 60 * 1000); // 1 hour after
   
   // Update current time every minute
   useEffect(() => {
@@ -41,14 +46,14 @@ export const QRCodeWithTimer: React.FC<QRCodeWithTimerProps> = ({ event, checkIn
         await navigator.share({
           title: `Check in to ${event.title}`,
           text: `Check in to the event: ${event.title}`,
-          url: checkInUrl,
+          url: effectiveCheckInUrl,
         });
       } catch (error) {
         console.error("Error sharing:", error);
       }
     } else {
       // Fallback for browsers that don't support the Web Share API
-      navigator.clipboard.writeText(checkInUrl);
+      navigator.clipboard.writeText(effectiveCheckInUrl);
       toast.success("Check-in URL copied to clipboard!");
     }
   };
@@ -59,10 +64,11 @@ export const QRCodeWithTimer: React.FC<QRCodeWithTimerProps> = ({ event, checkIn
       const pngUrl = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
       downloadLink.href = pngUrl;
-      downloadLink.download = `${event.title}-qr-code.png`;
+      downloadLink.download = `${event.title.replace(/\s/g, '-')}-qr-code.png`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
+      toast.success("QR code downloaded!");
     }
   };
 
@@ -80,7 +86,7 @@ export const QRCodeWithTimer: React.FC<QRCodeWithTimerProps> = ({ event, checkIn
           <div id="qr-wrapper" className="relative">
             <QRCodeCanvas 
               id="event-qr-code"
-              value={checkInUrl}
+              value={effectiveCheckInUrl}
               size={200}
               includeMargin={true}
               level="H"
