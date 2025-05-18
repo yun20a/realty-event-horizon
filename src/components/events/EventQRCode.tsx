@@ -2,8 +2,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Share } from "lucide-react";
+import { Share, Download, QrCode } from "lucide-react";
 import { CalendarEvent } from "@/types/events";
+import { toast } from "sonner";
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface EventQRCodeProps {
   event: CalendarEvent;
@@ -16,31 +18,51 @@ export const EventQRCode: React.FC<EventQRCodeProps> = ({ event, qrCodeUrl }) =>
       try {
         await navigator.share({
           title: event.title,
-          text: `Check out this event: ${event.title}`,
-          url: `https://example.com/events/landing/${event.id}`, // This would be your actual event landing page URL
+          text: `Check in to this event: ${event.title}`,
+          url: qrCodeUrl,
         });
       } catch (error) {
         console.error("Error sharing:", error);
       }
     } else {
       // Fallback for browsers that don't support the Web Share API
-      console.log("Web Share API not supported");
-      // You could show a modal with sharing options here
+      navigator.clipboard.writeText(qrCodeUrl);
+      toast.success("QR code URL copied to clipboard!");
+    }
+  };
+  
+  const handleDownload = () => {
+    const canvas = document.getElementById('event-qr-code') as HTMLCanvasElement;
+    if (canvas) {
+      const pngUrl = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.href = pngUrl;
+      downloadLink.download = `${event.title.replace(/\s/g, '-')}-qr-code.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      toast.success("QR code downloaded!");
     }
   };
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg">Event QR Code</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <QrCode className="h-5 w-5 text-primary" />
+          Event QR Code
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-4">
         <div className="bg-white p-4 rounded-lg shadow-sm">
-          {/* Placeholder for the QR code image */}
-          <div className="w-48 h-48 bg-gray-100 flex items-center justify-center">
-            {/* In a real implementation, you'd render an actual QR code here */}
-            <div className="text-center text-gray-400">QR Code Preview</div>
-          </div>
+          {/* Render actual QR code */}
+          <QRCodeCanvas 
+            id="event-qr-code"
+            value={qrCodeUrl}
+            size={200}
+            includeMargin={true}
+            level="H"
+          />
         </div>
         
         <p className="text-sm text-center text-muted-foreground">
@@ -48,7 +70,9 @@ export const EventQRCode: React.FC<EventQRCodeProps> = ({ event, qrCodeUrl }) =>
         </p>
         
         <div className="flex space-x-2 w-full">
-          <Button className="flex-1" variant="outline">Download</Button>
+          <Button className="flex-1 gap-2" variant="outline" onClick={handleDownload}>
+            <Download className="h-4 w-4" /> Download
+          </Button>
           <Button className="flex-1 gap-2" onClick={handleShare}>
             <Share className="h-4 w-4" /> Share
           </Button>

@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarEvent, Participant } from "@/types/events";
 import { format } from "date-fns";
-import { MapPin, User, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { MapPin, User, Clock, CheckCircle, XCircle, AlertCircle, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AttendanceLogViewProps {
   event: CalendarEvent;
@@ -14,14 +15,58 @@ interface AttendanceLogViewProps {
 export const AttendanceLogView: React.FC<AttendanceLogViewProps> = ({ event }) => {
   // Get all checked-in participants
   const checkedInParticipants = event.participants.filter(p => p.checkInTime);
+  
+  // Option to export attendance list
+  const handleExportCsv = () => {
+    if (checkedInParticipants.length === 0) return;
+    
+    // Create CSV content
+    const headers = ["Name", "Email", "Role", "Check-in Time", "Status", "Latitude", "Longitude"];
+    const csvContent = [
+      headers.join(','),
+      ...checkedInParticipants.map(p => {
+        const location = p.checkInLocation;
+        return [
+          `"${p.name}"`,
+          `"${p.email}"`,
+          `"${p.role}"`,
+          `"${p.checkInTime ? format(p.checkInTime, "yyyy-MM-dd HH:mm:ss") : ''}"`,
+          `"${p.checkInStatus === 'success' || p.checkInStatus === true ? 'Success' : 'Failed'}"`,
+          `"${location?.latitude || ''}"`,
+          `"${location?.longitude || ''}"`
+        ].join(',');
+      })
+    ].join('\n');
+    
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${event.title}-attendance-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
           Attendance Log
         </CardTitle>
+        {checkedInParticipants.length > 0 && (
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={handleExportCsv} 
+            className="flex items-center gap-1"
+          >
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="p-0">
         {checkedInParticipants.length === 0 ? (

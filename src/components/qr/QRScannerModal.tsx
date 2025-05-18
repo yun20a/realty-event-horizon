@@ -1,9 +1,11 @@
+
 import React, { useRef, useState, useEffect } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowLeft, ScanLine } from "lucide-react";
+import { getCurrentLocation } from "@/services/locationService";
 
 // Import the interface from the library
 import type { IDetectedBarcode } from "@yudiel/react-qr-scanner";
@@ -27,7 +29,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
     }
   }, [open]);
 
-  const handleScanSuccess = (detectedCodes: IDetectedBarcode[]) => {
+  const handleScanSuccess = async (detectedCodes: IDetectedBarcode[]) => {
     setScanActive(false);
     
     // Check if we have any detected codes
@@ -37,15 +39,33 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
     }
     
     // Get the value from the first detected code
-    const result = detectedCodes[0].rawValue; // Using 'rawValue' property instead of 'text'
+    const result = detectedCodes[0].rawValue;
     console.log("QR Code scanned:", result);
+    
+    // Try to get location data
+    let locationData = null;
+    try {
+      locationData = await getCurrentLocation();
+      console.log("Location captured:", locationData);
+    } catch (locationError) {
+      console.warn("Location error:", locationError);
+      // Continue with check-in even without location
+    }
     
     // Check if URL is an event check-in URL
     try {
       const url = new URL(result);
-      if (url.pathname.includes('/event-check-in/')) {
-        // Navigate to the check-in page
-        navigate(url.pathname);
+      if (url.pathname.includes('/event/') && url.pathname.includes('/check-in')) {
+        // Navigate to the check-in page with location data as state
+        navigate(url.pathname, { 
+          state: { locationData }
+        });
+        onClose();
+      } else if (url.pathname.includes('/event-check-in/')) {
+        // For backward compatibility with old format
+        navigate(url.pathname, { 
+          state: { locationData }
+        });
         onClose();
       } else {
         setError("Invalid QR code: Not an event check-in QR code");

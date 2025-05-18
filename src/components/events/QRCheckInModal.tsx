@@ -1,26 +1,19 @@
 
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React, { useEffect, useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { getCurrentLocation, LocationData } from "@/services/locationService";
-import { Participant } from "@/types/events";
+import { LocationData, getCurrentLocation, isLocationWithinRange } from "@/services/locationService";
+import { CalendarEvent, Participant } from "@/types/events";
+import { CheckCircle, XCircle, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Loader2, MapPin, CheckCircle, XCircle, AlertCircle, Smartphone } from "lucide-react";
 
 interface QRCheckInModalProps {
   isOpen: boolean;
   onClose: () => void;
   eventId: string;
-  eventLocation: { lat: number; lng: number } | undefined;
-  onCheckInComplete: (success: boolean, locationData?: LocationData) => void;
+  eventLocation?: { lat: number; lng: number };
   participant: Participant;
+  onCheckInComplete: (success: boolean, locationData?: LocationData) => void;
 }
 
 export const QRCheckInModal: React.FC<QRCheckInModalProps> = ({
@@ -28,122 +21,162 @@ export const QRCheckInModal: React.FC<QRCheckInModalProps> = ({
   onClose,
   eventId,
   eventLocation,
-  onCheckInComplete,
   participant,
+  onCheckInComplete,
 }) => {
-  const [step, setStep] = useState<"initial" | "requesting" | "success" | "error">("initial");
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [locationStatus, setLocationStatus] = useState<'pending' | 'success' | 'error' | 'denied'>('pending');
   const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [checkInStatus, setCheckInStatus] = useState<'pending' | 'success' | 'failed' | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Request location when modal opens
   useEffect(() => {
     if (isOpen) {
-      setStep("initial");
-      setErrorMessage("");
-      setLocationData(null);
+      setLocationStatus('pending');
+      setCheckInStatus('pending');
+      setErrorMessage(null);
+      
+      getLocation();
     }
   }, [isOpen]);
-
-  const handleRequestLocation = async () => {
-    setStep("requesting");
-    
+  
+  // Get user's current location
+  const getLocation = async () => {
     try {
       const location = await getCurrentLocation();
       setLocationData(location);
-      setStep("success");
-      onCheckInComplete(true, location);
-      toast.success("Successfully checked in!");
+      setLocationStatus('success');
+      
+      // Optional: Check if user is within allowed range of the event
+      if (eventLocation) {
+        const withinRange = isLocationWithinRange(
+          location, 
+          eventLocation,
+          1.0 // 1km range
+        );
+        
+        if (!withinRange) {
+          setErrorMessage("You appear to be too far from the event location. Check-in may not be accurate.");
+          // Still continue with check-in, just warn the user
+        }
+      }
+      
+      // Complete check-in process with location
+      completeCheckIn(location);
     } catch (error) {
       console.error("Location error:", error);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to get location");
-      setStep("error");
-      onCheckInComplete(false);
+      const errorMsg = (error as Error).message || "Failed to get your location";
+      setErrorMessage(errorMsg);
+      setLocationStatus(errorMsg.includes('denied') ? 'denied' : 'error');
+      
+      // Still try to complete check-in without location
+      completeCheckIn(null);
     }
   };
-
+  
+  // Complete the check-in process
+  const completeCheckIn = (location: LocationData | null) => {
+    // Determine if check-in is successful (location required)
+    const success = location !== null;
+    setCheckInStatus(success ? 'success' : 'failed');
+    
+    // Call the callback to record attendance
+    onCheckInComplete(success, location);
+    
+    // Show toast notification
+    if (success) {
+      toast.success("Check-in successful!");
+    } else {
+      toast.error("Check-in failed. Location access is required.");
+    }
+  };
+  
+  // Retry getting location
   const handleRetry = () => {
-    setStep("initial");
-    setErrorMessage("");
+    setLocationStatus('pending');
+    setErrorMessage(null);
+    getLocation();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-center">Event Check-In</DialogTitle>
-          <DialogDescription className="text-center">
-            Welcome {participant.name}, please share your location to complete check-in
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col items-center justify-center py-6 space-y-6">
-          {step === "initial" && (
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          {locationStatus === 'pending' && (
             <>
-              <div className="text-center space-y-2">
-                <div className="p-6 bg-blue-50 rounded-full mx-auto w-24 h-24 flex items-center justify-center">
-                  <MapPin className="h-12 w-12 text-blue-500" />
-                </div>
-                <h3 className="text-lg font-medium mt-4">Location Required</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                  We need your current location to confirm your attendance at this event.
-                </p>
+              <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
               </div>
-              
-              <Button 
-                onClick={handleRequestLocation} 
-                className="gap-2"
-                size="lg"
-              >
-                <Smartphone className="h-5 w-5" />
-                Share My Location
-              </Button>
+              <h3 className="text-lg font-medium mb-2">Checking your location</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Please allow access to your location to complete check-in
+              </p>
             </>
           )}
-
-          {step === "requesting" && (
-            <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <p>Requesting location access...</p>
-              <p className="text-xs text-muted-foreground">Please allow access when prompted by your browser</p>
-            </div>
+          
+          {locationStatus === 'denied' && (
+            <>
+              <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+                <MapPin className="h-10 w-10 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">Location Access Required</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Please enable location access in your browser settings to check in.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={onClose}>Cancel</Button>
+                <Button onClick={handleRetry}>Try Again</Button>
+              </div>
+            </>
           )}
-
-          {step === "success" && locationData && (
-            <div className="text-center space-y-4">
-              <div className="p-6 bg-green-50 rounded-full mx-auto w-24 h-24 flex items-center justify-center">
-                <CheckCircle className="h-12 w-12 text-green-500" />
+          
+          {locationStatus === 'error' && !checkInStatus && (
+            <>
+              <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                <XCircle className="h-10 w-10 text-red-500" />
               </div>
-              <h3 className="text-lg font-medium">Check-In Successful!</h3>
-              
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Location captured:</p>
-                <p className="text-xs text-muted-foreground">
-                  Lat: {locationData.latitude.toFixed(6)}, 
-                  Lng: {locationData.longitude.toFixed(6)}
-                </p>
+              <h3 className="text-lg font-medium mb-2">Location Error</h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                {errorMessage || "Unable to get your location."}
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Your check-in will be recorded without location data.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={onClose}>Cancel</Button>
+                <Button onClick={handleRetry}>Try Again</Button>
               </div>
-              
-              <Button onClick={onClose}>Close</Button>
-            </div>
+            </>
           )}
-
-          {step === "error" && (
-            <div className="text-center space-y-4 w-full">
-              <div className="p-6 bg-red-50 rounded-full mx-auto w-24 h-24 flex items-center justify-center">
-                <XCircle className="h-12 w-12 text-red-500" />
+          
+          {checkInStatus === 'success' && (
+            <>
+              <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-4">
+                <CheckCircle className="h-10 w-10 text-green-500" />
               </div>
-              
-              <h3 className="text-lg font-medium">Location Access Required</h3>
-              
-              <Alert variant="destructive" className="mt-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{errorMessage}</AlertDescription>
-              </Alert>
-              
-              <div className="space-y-2 mt-4">
-                <Button onClick={handleRetry} className="w-full">Try Again</Button>
-                <Button variant="outline" onClick={onClose} className="w-full">Cancel</Button>
+              <h3 className="text-lg font-medium mb-2">Check-in Successful!</h3>
+              <p className="text-sm text-muted-foreground">
+                Thank you {participant.name}, your attendance has been recorded.
+              </p>
+              {locationData && (
+                <div className="flex items-center justify-center gap-1 mt-2 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" /> Location captured
+                </div>
+              )}
+            </>
+          )}
+          
+          {checkInStatus === 'failed' && (
+            <>
+              <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                <XCircle className="h-10 w-10 text-red-500" />
               </div>
-            </div>
+              <h3 className="text-lg font-medium mb-2">Check-in Failed</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Unable to complete check-in. Location access is required.
+              </p>
+              <Button onClick={handleRetry}>Try Again</Button>
+            </>
           )}
         </div>
       </DialogContent>
