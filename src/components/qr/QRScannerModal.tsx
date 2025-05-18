@@ -81,8 +81,8 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
               <Scanner
                 onScan={handleScanSuccess}
                 onError={handleError}
-                // Remove the containerStyle prop as it's not supported
-                style={{
+                // Using 'styles' instead of 'style' as suggested by the error
+                styles={{
                   width: '100%',
                   height: '100%'
                 }}
