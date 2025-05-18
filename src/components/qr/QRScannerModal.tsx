@@ -1,6 +1,5 @@
-
 import React, { useRef, useState, useEffect } from "react";
-import { QrScanner } from "@yudiel/react-qr-scanner";
+import { Scanner } from "@yudiel/react-qr-scanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -66,7 +65,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
             className="w-full aspect-square bg-black"
           >
             {scanActive && (
-              <QrScanner
+              <Scanner
                 onDecode={handleScanSuccess}
                 onError={handleError}
                 containerStyle={{
