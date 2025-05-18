@@ -67,7 +67,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
           >
             {scanActive && (
               <Scanner
-                onResult={handleScanSuccess}
+                onScan={handleScanSuccess}
                 onError={handleError}
                 containerStyle={{
                   width: '100%',
