@@ -6,7 +6,7 @@ import { Share, Clock, QrCode, Download } from "lucide-react";
 import { CalendarEvent } from "@/types/events";
 import { format, isWithinInterval } from "date-fns";
 import { toast } from "sonner";
-import QRCode from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface QRCodeWithTimerProps {
   event: CalendarEvent;
@@ -78,13 +78,12 @@ export const QRCodeWithTimer: React.FC<QRCodeWithTimerProps> = ({ event, checkIn
         <div className={`bg-white p-4 rounded-lg shadow-sm transition-all ${!isQrActive ? 'opacity-50' : ''}`}>
           {/* QR code with event URL and ID */}
           <div id="qr-wrapper" className="relative">
-            <QRCode 
+            <QRCodeCanvas 
               id="event-qr-code"
               value={checkInUrl}
               size={200}
               includeMargin={true}
               level="H"
-              renderAs="canvas"
             />
             {!isQrActive && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-sm">
