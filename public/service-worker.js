@@ -5,8 +5,6 @@
 // See https://developers.google.com/web/tools/workbox/modules
 // for the list of available Workbox modules, or add any other
 // code you'd like.
-// You can also remove this file if you'd prefer not to use a
-// service worker, and the Workbox build step will be skipped.
 
 // Import Workbox
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js');
@@ -118,3 +116,29 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Add offline analytics support
+workbox.routing.registerRoute(
+  /.*analytics\.com\/collect.*/, 
+  new workbox.strategies.NetworkOnly({
+    plugins: [
+      new workbox.backgroundSync.BackgroundSyncPlugin('analytics', {
+        maxRetentionTime: 24 * 60, // Retry for up to 24 hours
+      }),
+    ],
+  })
+);
+
+// Periodically update caches
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'update-cached-content') {
+    event.waitUntil(updateCachedContent());
+  }
+});
+
+async function updateCachedContent() {
+  // This would be where you update specific cached content
+  const cache = await caches.open('updated-content');
+  // Example: update homepage
+  await cache.add('/');
+}

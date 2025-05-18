@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -16,10 +16,33 @@ import NotFound from "@/pages/NotFound";
 import EventStats from "./pages/EventStats";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import { InstallPrompt } from "./components/pwa/InstallPrompt";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Register service worker update handler
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      // Handle service worker updates
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New content is available, ask the user if they want to reload
+                if (window.confirm('New content is available. Reload to update?')) {
+                  window.location.reload();
+                }
+              }
+            });
+          }
+        });
+      });
+    }
+  }, []);
+
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <QueryClientProvider client={queryClient}>
@@ -39,6 +62,7 @@ const App = () => {
             <Route path="/event/:id/check-in" element={<EventCheckIn />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <InstallPrompt />
         </BrowserRouter>
         <Toaster richColors />
       </QueryClientProvider>
