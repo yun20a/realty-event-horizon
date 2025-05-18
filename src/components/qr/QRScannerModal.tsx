@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -66,7 +67,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ open, onClose })
           >
             {scanActive && (
               <Scanner
-                onDecode={handleScanSuccess}
+                onResult={handleScanSuccess}
                 onError={handleError}
                 containerStyle={{
                   width: '100%',
