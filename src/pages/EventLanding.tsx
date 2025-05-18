@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarEvent } from "@/types/events";
 import { EventBadge } from "@/components/events/EventBadge";
-import { Share, MapPin, Calendar, Clock, ArrowRight, Users } from "lucide-react";
+import { Share, MapPin, Calendar, Clock, ArrowRight, Users, QrCode } from "lucide-react";
 import { EventAttendanceForm } from "@/components/events/EventAttendanceForm";
 import { QRCodeWithTimer } from "@/components/events/QRCodeWithTimer";
 import { AttendanceLogView } from "@/components/events/AttendanceLogView";
