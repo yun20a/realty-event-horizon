@@ -107,4 +107,25 @@
   .hover-scale {
     @apply transition-transform duration-200 hover:scale-105;
   }
+  
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .touch-scrolling {
+    -webkit-overflow-scrolling: touch;
+  }
 }
