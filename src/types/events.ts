@@ -1,8 +1,16 @@
+
 export type EventType = 'property' | 'client' | 'contract' | 'internal' | 'followup';
 
 export type EventStatus = 'scheduled' | 'completed' | 'cancelled' | 'pending';
 
 export type CheckInStatus = 'success' | 'failed' | undefined;
+
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  timestamp: number;
+}
 
 export interface Participant {
   id: string;
